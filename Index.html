@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asisten Parsing Daftar Hadir Siswa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      /* Basic styling */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f3f4f6;
+      }
+      
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      h1 {
+        color: #4f46e5;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      
+      .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .drop-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+      
+      .drop-zone.highlight {
+        border-color: #4f46e5;
+      }
+      
+      .btn {
+        display: inline-block;
+        background-color: #4f46e5;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      
+      .btn-secondary {
+        background-color: #e0e7ff;
+        color: #4338ca;
+      }
+      
+      .btn:hover {
+        background-color: #4338ca;
+      }
+      
+      .btn-secondary:hover {
+        background-color: #c7d2fe;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+      #preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        margin: 0 auto;
+        display: block;
+        background-color: #f9fafb;
+        border-radius: 4px;
+      }
+      
+      #result-container {
+        background-color: #f9fafb;
+        padding: 16px;
+        border-radius: 8px;
+        white-space: pre-line;
+      }
+      
+      .error-message {
+        color: #ef4444;
+        background-color: #fee2e2;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 16px;
+      }
+      
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #4f46e5;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        margin-bottom: 10px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      #loading {
+        text-align: center;
+        padding: 20px 0;
+      }
+      
+      footer {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 30px;
+      }
+      
+      .file-input {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-clipboard-list"></i> Asisten Parsing Daftar Hadir Siswa</h1>
+        <p>Ekstraksi Data Daftar Hadir Siswa dengan AI</p>
+      </header>
+      
+      <div class="card">
+        <div id="upload-section">
+          <div class="drop-zone" id="drop-zone">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 36px; color: #4f46e5; margin-bottom: 10px;"></i>
+            <p>Seret gambar Daftar Hadir Siswa ke sini atau</p>
+            <label for="file-input" class="btn" style="display: inline-block; width: auto;">
+              <i class="fas fa-image"></i> Pilih Gambar Daftar Hadir
+            </label>
+            <input type="file" id="file-input" accept="image/*" class="file-input" />
+            <p style="font-size: 14px; color: #6b7280; margin-top: 10px;">Mendukung format: JPG, PNG, GIF (Maks. 10MB)</p>
+          </div>
+        </div>
+        
+        <div id="preview-section" class="hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 18px; font-weight: bold;">Preview Daftar Hadir</h2>
+            <button id="change-image" style="background: none; border: none; color: #4f46e5; cursor: pointer;">
+              <i class="fas fa-redo-alt"></i> Ganti Gambar
+            </button>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <img id="preview-image" src="" alt="Preview" />
+          </div>
+          
+          <button id="process-button" class="btn">
+            <i class="fas fa-magic"></i> Ekstrak Data Daftar Hadir
+          </button>
+        </div>
+        
+        <div id="loading" class="hidden">
+          <div class="spinner"></div>
+          <p>Menganalisis data Daftar Hadir Siswa...</p>
+        </div>
+        
+        <div id="result-section" class="hidden">
+          <h2 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">Hasil Ekstraksi Data</h2>
+          <div id="result-container"></div>
+          
+          <div style="margin-top: 20px;">
+            <button id="copy-button" class="btn btn-secondary">
+              <i class="fas fa-copy"></i> Salin Hasil
+            </button>
+            
+            <button id="new-image" class="btn">
+              <i class="fas fa-plus-circle"></i> Daftar Hadir Baru
+            </button>
+          </div>
+        </div>
+        
+        <div id="error-message" class="error-message hidden"></div>
+      </div>
+      
+      <footer>
+        <p>&copy; <?= new Date().getFullYear() ?> Asisten Parsing Daftar Hadir Siswa</p>
+      </footer>
+    </div>
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewSection = document.getElementById('preview-section');
+        const previewImage = document.getElementById('preview-image');
+        const processButton = document.getElementById('process-button');
+        const changeImageBtn = document.getElementById('change-image');
+        const resultSection = document.getElementById('result-section');
+        const resultContainer = document.getElementById('result-container');
+        const copyButton = document.getElementById('copy-button');
+        const newImageButton = document.getElementById('new-image');
+        const loadingSection = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+
+        // Helper function to reset the UI
+        function resetUI() {
+          previewSection.classList.add('hidden');
+          processButton.disabled = false;
+          resultSection.classList.add('hidden');
+          loadingSection.classList.add('hidden');
+          errorMessage.classList.add('hidden');
+          previewImage.src = '';
+          resultContainer.innerHTML = '';
+        }
+
+        // Helper function to handle file selection
+        function handleFileSelect(file) {
+          // Reset UI
+          resetUI();
+
+          // Validate file type and size
+          const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+          const maxSize = 10 * 1024 * 1024; // 10MB
+
+          if (!validTypes.includes(file.type)) {
+            errorMessage.textContent = 'Format file tidak didukung. Harap pilih JPG, PNG, atau GIF.';
+            errorMessage.classList.remove('hidden');
+            return;
+          }
+
+          if (file.size > maxSize) {
+            errorMessage.textContent = 'Ukuran file terlalu besar. Maksimal 10MB.';
+            errorMessage.classList.remove('hidden');
+            return;
+          }
+
+          // Read and preview the file
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewSection.classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        }
+
+        // File input change event
+        fileInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            handleFileSelect(file);
+          }
+        });
+
+        // Drag and drop events
+        dropZone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('highlight');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('highlight');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('highlight');
+
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            handleFileSelect(file);
+          }
+        });
+
+        // Change image button
+        changeImageBtn.addEventListener('click', function() {
+          fileInput.click();
+        });
+
+        // Process button click
+        processButton.addEventListener('click', function() {
+          // Show loading
+          loadingSection.classList.remove('hidden');
+          previewSection.classList.add('hidden');
+          processButton.disabled = true;
+
+          // Get the file
+          const file = fileInput.files[0];
+          
+          // Convert file to base64
+          const reader = new FileReader();
+          reader.onloadend = function() {
+            const base64data = reader.result.split(',')[1];
+            
+            // Call the server-side function
+            google.script.run
+              .withSuccessHandler(function(response) {
+                // Hide loading
+                loadingSection.classList.add('hidden');
+                
+                if (response.success) {
+                  // Check if document is not a Daftar Hadir
+                  if (response.description === "Dokumen ini bukan daftar hadir siswa") {
+                    errorMessage.textContent = 'Dokumen yang diunggah bukan Daftar Hadir Siswa. Silakan coba gambar lain.';
+                    errorMessage.classList.remove('hidden');
+                    previewSection.classList.remove('hidden');
+                    processButton.disabled = false;
+                    return;
+                  }
+                  
+                  // Show result
+                  resultContainer.innerHTML = response.description.replace(/\n/g, '<br>');
+                  resultSection.classList.remove('hidden');
+                } else {
+                  // Show error
+                  errorMessage.textContent = 'Gagal menganalisis gambar: ' + response.error;
+                  errorMessage.classList.remove('hidden');
+                  previewSection.classList.remove('hidden');
+                  processButton.disabled = false;
+                }
+              })
+              .withFailureHandler(function(error) {
+                // Hide loading
+                loadingSection.classList.add('hidden');
+                
+                // Show error
+                errorMessage.textContent = 'Terjadi kesalahan: ' + error;
+                errorMessage.classList.remove('hidden');
+                previewSection.classList.remove('hidden');
+                processButton.disabled = false;
+              })
+              .processImage(base64data, file.name, file.type);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        // Copy button
+        copyButton.addEventListener('click', function() {
+          const textToCopy = resultContainer.innerText;
+          
+          // Create a temporary textarea to copy text
+          const tempTextArea = document.createElement('textarea');
+          tempTextArea.value = textToCopy;
+          document.body.appendChild(tempTextArea);
+          tempTextArea.select();
+          
+          try {
+            document.execCommand('copy');
+            // Optional: Show a temporary "Copied!" message
+            copyButton.textContent = 'Disalin!';
+            setTimeout(() => {
+              copyButton.innerHTML = '<i class="fas fa-copy"></i> Salin Hasil';
+            }, 2000);
+          } catch (err) {
+            console.error('Gagal menyalin teks', err);
+          }
+          
+          document.body.removeChild(tempTextArea);
+        });
+
+        // New image button
+        newImageButton.addEventListener('click', function() {
+          resetUI();
+          fileInput.value = ''; // Clear file input
+        });
+      });
+    </script>
+  </body>
+</html>
